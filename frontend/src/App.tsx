@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Typography, TextField, Button, Slider, Box, Paper, Alert, Grid, IconButton } from '@mui/material';
 import { styled } from '@mui/system';
 import DeleteIcon from '@mui/icons-material/Delete';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { backend } from 'declarations/backend';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -67,6 +68,27 @@ function App() {
     } catch (error) {
       console.error('Error updating bill amount:', error);
       setError('Failed to update bill amount');
+    }
+  };
+
+  const handleResetBillAmount = async () => {
+    try {
+      await backend.resetBillAmount();
+      setBillAmount(0);
+      fetchBillSplit();
+    } catch (error) {
+      console.error('Error resetting bill amount:', error);
+      setError('Failed to reset bill amount');
+    }
+  };
+
+  const handleResetPercentages = async () => {
+    try {
+      await backend.resetPercentages();
+      fetchBillSplit();
+    } catch (error) {
+      console.error('Error resetting percentages:', error);
+      setError('Failed to reset percentages');
     }
   };
 
@@ -158,19 +180,29 @@ function App() {
         </Grid>
         <Grid item xs={12} md={6}>
           <StyledPaper>
-            <TextField
-              label="Bill Amount"
-              type="number"
-              value={billAmount}
-              onChange={handleBillAmountChange}
-              fullWidth
-              margin="normal"
-            />
+            <Box display="flex" alignItems="center" justifyContent="space-between">
+              <TextField
+                label="Bill Amount"
+                type="number"
+                value={billAmount}
+                onChange={handleBillAmountChange}
+                style={{ width: '70%' }}
+                margin="normal"
+              />
+              <IconButton onClick={handleResetBillAmount} color="secondary">
+                <RestartAltIcon />
+              </IconButton>
+            </Box>
           </StyledPaper>
           <StyledPaper>
-            <Typography variant="h6" gutterBottom>
-              People
-            </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="h6">
+                People
+              </Typography>
+              <Button onClick={handleResetPercentages} startIcon={<RestartAltIcon />} color="secondary">
+                Reset Percentages
+              </Button>
+            </Box>
             {people.map((person) => (
               <Box key={person.id.toString()} mb={2}>
                 <Grid container alignItems="center" spacing={2}>

@@ -26,6 +26,8 @@ service : {
   calculateAmounts: (float64) -> (vec Person) query;
   getBillSplit: () -> (BillSplitInfo) query;
   removePerson: (nat) -> (Result);
+  resetBillAmount: () -> ();
+  resetPercentages: () -> ();
   setBillAmount: (float64) -> ();
   updatePercentages: (vec record {
                             nat;

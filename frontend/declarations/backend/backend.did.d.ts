@@ -22,6 +22,8 @@ export interface _SERVICE {
   'calculateAmounts' : ActorMethod<[number], Array<Person>>,
   'getBillSplit' : ActorMethod<[], BillSplitInfo>,
   'removePerson' : ActorMethod<[bigint], Result>,
+  'resetBillAmount' : ActorMethod<[], undefined>,
+  'resetPercentages' : ActorMethod<[], undefined>,
   'setBillAmount' : ActorMethod<[number], undefined>,
   'updatePercentages' : ActorMethod<[Array<[bigint, number]>], Result>,
 }

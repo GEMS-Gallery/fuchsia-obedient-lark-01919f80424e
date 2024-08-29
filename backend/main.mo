@@ -40,7 +40,7 @@ actor {
     let newPerson: Person = {
       id = id;
       name = name;
-      percentage = 0;
+      percentage = 0.0;
       amount = null;
     };
     people.put(id, newPerson);
@@ -119,6 +119,31 @@ actor {
         } else {
           null
         };
+      };
+      people.put(id, updatedPerson);
+    };
+  };
+
+  public func resetBillAmount() : async () {
+    billAmount := 0;
+    for ((id, person) in people.entries()) {
+      let updatedPerson = {
+        id = person.id;
+        name = person.name;
+        percentage = person.percentage;
+        amount = null;
+      };
+      people.put(id, updatedPerson);
+    };
+  };
+
+  public func resetPercentages() : async () {
+    for ((id, person) in people.entries()) {
+      let updatedPerson = {
+        id = person.id;
+        name = person.name;
+        percentage = 0.0;
+        amount = null;
       };
       people.put(id, updatedPerson);
     };
