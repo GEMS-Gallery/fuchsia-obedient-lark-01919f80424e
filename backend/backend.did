@@ -23,6 +23,7 @@ type BillSplitInfo =
  };
 service : {
   addPerson: (text) -> (Result_1);
+  calculateAmounts: (float64) -> (vec Person) query;
   getBillSplit: () -> (BillSplitInfo) query;
   removePerson: (nat) -> (Result);
   setBillAmount: (float64) -> ();

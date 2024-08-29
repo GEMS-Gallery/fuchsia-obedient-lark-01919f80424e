@@ -67,6 +67,21 @@ actor {
     }
   };
 
+  public query func calculateAmounts(newBillAmount: Float) : async [Person] {
+    Iter.toArray(Iter.map(people.vals(), func (person: Person) : Person {
+      {
+        id = person.id;
+        name = person.name;
+        percentage = person.percentage;
+        amount = if (newBillAmount > 0) {
+          ?(newBillAmount * person.percentage / 100)
+        } else {
+          null
+        };
+      }
+    }))
+  };
+
   public func setBillAmount(amount: Float) : async () {
     billAmount := amount;
     for ((id, person) in people.entries()) {

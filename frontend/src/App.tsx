@@ -44,8 +44,21 @@ function App() {
   const handleBillAmountChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const amount = parseFloat(event.target.value);
     setBillAmount(amount);
-    await backend.setBillAmount(amount);
-    fetchBillSplit();
+    try {
+      // First, calculate new amounts without updating the backend state
+      const updatedPeople = await backend.calculateAmounts(amount);
+      setPeople(updatedPeople.map(p => ({
+        ...p,
+        id: BigInt(p.id),
+        percentage: Number(p.percentage),
+        amount: p.amount ? Number(p.amount) : null
+      })));
+      
+      // Then, update the backend state asynchronously
+      await backend.setBillAmount(amount);
+    } catch (error) {
+      console.error('Error updating bill amount:', error);
+    }
   };
 
   const handleAddPerson = async () => {

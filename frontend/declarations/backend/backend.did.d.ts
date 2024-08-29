@@ -19,6 +19,7 @@ export type Result_1 = { 'ok' : bigint } |
   { 'err' : string };
 export interface _SERVICE {
   'addPerson' : ActorMethod<[string], Result_1>,
+  'calculateAmounts' : ActorMethod<[number], Array<Person>>,
   'getBillSplit' : ActorMethod<[], BillSplitInfo>,
   'removePerson' : ActorMethod<[bigint], Result>,
   'setBillAmount' : ActorMethod<[number], undefined>,

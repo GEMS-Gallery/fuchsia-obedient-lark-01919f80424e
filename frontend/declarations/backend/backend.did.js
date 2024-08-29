@@ -14,6 +14,7 @@ export const idlFactory = ({ IDL }) => {
   const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text });
   return IDL.Service({
     'addPerson' : IDL.Func([IDL.Text], [Result_1], []),
+    'calculateAmounts' : IDL.Func([IDL.Float64], [IDL.Vec(Person)], ['query']),
     'getBillSplit' : IDL.Func([], [BillSplitInfo], ['query']),
     'removePerson' : IDL.Func([IDL.Nat], [Result], []),
     'setBillAmount' : IDL.Func([IDL.Float64], [], []),
