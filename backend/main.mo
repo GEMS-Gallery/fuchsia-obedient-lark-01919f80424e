@@ -27,6 +27,14 @@ actor {
   var people = HashMap.fromIter<Nat, Person>(peopleEntries.vals(), 0, Nat.equal, Nat.hash);
   var billAmount: Float = 0;
 
+  func calculateTotalPercentage() : Float {
+    var total : Float = 0;
+    for (person in people.vals()) {
+      total += person.percentage;
+    };
+    total
+  };
+
   public func addPerson(name: Text) : async Result.Result<Nat, Text> {
     let id = nextPersonId;
     let newPerson: Person = {
@@ -48,21 +56,27 @@ actor {
   };
 
   public func updatePercentage(id: Nat, percentage: Float) : async Result.Result<(), Text> {
+    let currentTotal = calculateTotalPercentage();
     switch (people.get(id)) {
       case null { #err("Person not found") };
       case (?person) {
-        let updatedPerson = {
-          id = person.id;
-          name = person.name;
-          percentage = percentage;
-          amount = if (billAmount > 0) {
-            ?(billAmount * percentage / 100)
-          } else {
-            null
+        let newTotal = currentTotal - person.percentage + percentage;
+        if (newTotal > 100) {
+          #err("Total percentage cannot exceed 100%")
+        } else {
+          let updatedPerson = {
+            id = person.id;
+            name = person.name;
+            percentage = percentage;
+            amount = if (billAmount > 0) {
+              ?(billAmount * percentage / 100)
+            } else {
+              null
+            };
           };
-        };
-        people.put(id, updatedPerson);
-        #ok(())
+          people.put(id, updatedPerson);
+          #ok(())
+        }
       };
     }
   };
@@ -101,7 +115,7 @@ actor {
 
   public query func getBillSplit() : async BillSplitInfo {
     let peopleArray = Iter.toArray(people.vals());
-    let totalPercentage = Array.foldLeft<Person, Float>(peopleArray, 0, func(acc, p) { acc + p.percentage });
+    let totalPercentage = calculateTotalPercentage();
     {
       totalAmount = billAmount;
       people = peopleArray;

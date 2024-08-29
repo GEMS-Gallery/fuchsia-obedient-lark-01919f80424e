@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, TextField, Button, Slider, Box, Paper } from '@mui/material';
+import { Container, Typography, TextField, Button, Slider, Box, Paper, Alert } from '@mui/material';
 import { styled } from '@mui/system';
 import { backend } from 'declarations/backend';
 
@@ -20,6 +20,7 @@ function App() {
   const [people, setPeople] = useState<Person[]>([]);
   const [newPersonName, setNewPersonName] = useState<string>('');
   const [totalPercentage, setTotalPercentage] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBillSplit();
@@ -38,6 +39,7 @@ function App() {
       setTotalPercentage(Number(result.totalPercentage));
     } catch (error) {
       console.error('Error fetching bill split:', error);
+      setError('Failed to fetch bill split data');
     }
   };
 
@@ -45,7 +47,6 @@ function App() {
     const amount = parseFloat(event.target.value);
     setBillAmount(amount);
     try {
-      // First, calculate new amounts without updating the backend state
       const updatedPeople = await backend.calculateAmounts(amount);
       setPeople(updatedPeople.map(p => ({
         ...p,
@@ -54,10 +55,10 @@ function App() {
         amount: p.amount ? Number(p.amount) : null
       })));
       
-      // Then, update the backend state asynchronously
       await backend.setBillAmount(amount);
     } catch (error) {
       console.error('Error updating bill amount:', error);
+      setError('Failed to update bill amount');
     }
   };
 
@@ -69,6 +70,7 @@ function App() {
         fetchBillSplit();
       } catch (error) {
         console.error('Error adding person:', error);
+        setError('Failed to add person');
       }
     }
   };
@@ -79,15 +81,22 @@ function App() {
       fetchBillSplit();
     } catch (error) {
       console.error('Error removing person:', error);
+      setError('Failed to remove person');
     }
   };
 
   const handlePercentageChange = async (id: bigint, newValue: number) => {
     try {
-      await backend.updatePercentage(id, newValue);
-      fetchBillSplit();
+      const result = await backend.updatePercentage(id, newValue);
+      if ('err' in result) {
+        setError(result.err);
+      } else {
+        setError(null);
+        fetchBillSplit();
+      }
     } catch (error) {
       console.error('Error updating percentage:', error);
+      setError('Failed to update percentage');
     }
   };
 
@@ -96,6 +105,7 @@ function App() {
       <Typography variant="h4" component="h1" gutterBottom>
         Bill Splitter
       </Typography>
+      {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
       <StyledPaper>
         <TextField
           label="Bill Amount"
@@ -119,7 +129,8 @@ function App() {
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               min={0}
-              max={100}
+              max={100 - (totalPercentage - person.percentage)}
+              disabled={totalPercentage >= 100}
             />
             <Typography variant="body2">
               {person.percentage.toFixed(2)}% - ${person.amount?.toFixed(2) || '0.00'}
