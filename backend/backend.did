@@ -1,0 +1,30 @@
+type Result_1 = 
+ variant {
+   err: text;
+   ok: nat;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok;
+ };
+type Person = 
+ record {
+   amount: opt float64;
+   id: nat;
+   name: text;
+   percentage: float64;
+ };
+type BillSplitInfo = 
+ record {
+   people: vec Person;
+   totalAmount: float64;
+   totalPercentage: float64;
+ };
+service : {
+  addPerson: (text) -> (Result_1);
+  getBillSplit: () -> (BillSplitInfo) query;
+  removePerson: (nat) -> (Result);
+  setBillAmount: (float64) -> ();
+  updatePercentage: (nat, float64) -> (Result);
+}
