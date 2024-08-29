@@ -23,7 +23,7 @@ export interface _SERVICE {
   'getBillSplit' : ActorMethod<[], BillSplitInfo>,
   'removePerson' : ActorMethod<[bigint], Result>,
   'setBillAmount' : ActorMethod<[number], undefined>,
-  'updatePercentage' : ActorMethod<[bigint, number], Result>,
+  'updatePercentages' : ActorMethod<[Array<[bigint, number]>], Result>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

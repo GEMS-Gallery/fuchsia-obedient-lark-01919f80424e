@@ -18,7 +18,11 @@ export const idlFactory = ({ IDL }) => {
     'getBillSplit' : IDL.Func([], [BillSplitInfo], ['query']),
     'removePerson' : IDL.Func([IDL.Nat], [Result], []),
     'setBillAmount' : IDL.Func([IDL.Float64], [], []),
-    'updatePercentage' : IDL.Func([IDL.Nat, IDL.Float64], [Result], []),
+    'updatePercentages' : IDL.Func(
+        [IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Float64))],
+        [Result],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

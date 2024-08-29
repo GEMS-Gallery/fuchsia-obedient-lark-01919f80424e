@@ -21,6 +21,7 @@ function App() {
   const [newPersonName, setNewPersonName] = useState<string>('');
   const [totalPercentage, setTotalPercentage] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [localPercentages, setLocalPercentages] = useState<{[key: string]: number}>({});
 
   useEffect(() => {
     fetchBillSplit();
@@ -30,13 +31,15 @@ function App() {
     try {
       const result = await backend.getBillSplit();
       setBillAmount(Number(result.totalAmount));
-      setPeople(result.people.map(p => ({
+      const updatedPeople = result.people.map(p => ({
         ...p,
         id: BigInt(p.id),
         percentage: Number(p.percentage),
         amount: p.amount ? Number(p.amount) : null
-      })));
+      }));
+      setPeople(updatedPeople);
       setTotalPercentage(Number(result.totalPercentage));
+      setLocalPercentages(Object.fromEntries(updatedPeople.map(p => [p.id.toString(), p.percentage])));
     } catch (error) {
       console.error('Error fetching bill split:', error);
       setError('Failed to fetch bill split data');
@@ -85,9 +88,20 @@ function App() {
     }
   };
 
-  const handlePercentageChange = async (id: bigint, newValue: number) => {
+  const handleLocalPercentageChange = (id: bigint, newValue: number) => {
+    setLocalPercentages(prev => ({
+      ...prev,
+      [id.toString()]: newValue
+    }));
+  };
+
+  const handleSavePercentages = async () => {
     try {
-      const result = await backend.updatePercentage(id, newValue);
+      const updates = Object.entries(localPercentages).map(([id, percentage]) => [
+        Number(id),
+        percentage
+      ]);
+      const result = await backend.updatePercentages(updates);
       if ('err' in result) {
         setError(result.err);
       } else {
@@ -95,8 +109,8 @@ function App() {
         fetchBillSplit();
       }
     } catch (error) {
-      console.error('Error updating percentage:', error);
-      setError('Failed to update percentage');
+      console.error('Error updating percentages:', error);
+      setError('Failed to update percentages');
     }
   };
 
@@ -124,16 +138,15 @@ function App() {
           <Box key={person.id.toString()} mb={2}>
             <Typography variant="subtitle1">{person.name}</Typography>
             <Slider
-              value={person.percentage}
-              onChange={(_, newValue) => handlePercentageChange(person.id, newValue as number)}
+              value={localPercentages[person.id.toString()] || 0}
+              onChange={(_, newValue) => handleLocalPercentageChange(person.id, newValue as number)}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               min={0}
-              max={100 - (totalPercentage - person.percentage)}
-              disabled={totalPercentage >= 100}
+              max={100}
             />
             <Typography variant="body2">
-              {person.percentage.toFixed(2)}% - ${person.amount?.toFixed(2) || '0.00'}
+              {(localPercentages[person.id.toString()] || 0).toFixed(2)}% - ${((billAmount * (localPercentages[person.id.toString()] || 0)) / 100).toFixed(2)}
             </Typography>
             <Button onClick={() => handleRemovePerson(person.id)} size="small" color="secondary">
               Remove
@@ -151,16 +164,19 @@ function App() {
             Add Person
           </Button>
         </Box>
+        <Button onClick={handleSavePercentages} variant="contained" color="primary" style={{ marginTop: '1rem' }}>
+          Save Percentages
+        </Button>
       </StyledPaper>
       <StyledPaper>
         <Typography variant="h6" gutterBottom>
           Total
         </Typography>
         <Typography variant="body1">
-          Total Percentage: {totalPercentage.toFixed(2)}%
+          Total Percentage: {Object.values(localPercentages).reduce((a, b) => a + b, 0).toFixed(2)}%
         </Typography>
         <Typography variant="body1">
-          Remaining: {(100 - totalPercentage).toFixed(2)}%
+          Remaining: {(100 - Object.values(localPercentages).reduce((a, b) => a + b, 0)).toFixed(2)}%
         </Typography>
       </StyledPaper>
     </Container>

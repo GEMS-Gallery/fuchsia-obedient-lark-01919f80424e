@@ -55,15 +55,25 @@ actor {
     }
   };
 
-  public func updatePercentage(id: Nat, percentage: Float) : async Result.Result<(), Text> {
-    let currentTotal = calculateTotalPercentage();
-    switch (people.get(id)) {
-      case null { #err("Person not found") };
-      case (?person) {
-        let newTotal = currentTotal - person.percentage + percentage;
-        if (newTotal > 100) {
-          #err("Total percentage cannot exceed 100%")
-        } else {
+  public func updatePercentages(updates: [(Nat, Float)]) : async Result.Result<(), Text> {
+    var newTotal : Float = 0;
+    for ((id, percentage) in updates.vals()) {
+      switch (people.get(id)) {
+        case null { return #err("Person not found") };
+        case (?person) {
+          newTotal += percentage;
+        };
+      };
+    };
+
+    if (newTotal > 100) {
+      return #err("Total percentage cannot exceed 100%");
+    };
+
+    for ((id, percentage) in updates.vals()) {
+      switch (people.get(id)) {
+        case null { /* Already checked, should not happen */ };
+        case (?person) {
           let updatedPerson = {
             id = person.id;
             name = person.name;
@@ -75,10 +85,11 @@ actor {
             };
           };
           people.put(id, updatedPerson);
-          #ok(())
-        }
+        };
       };
-    }
+    };
+
+    #ok(())
   };
 
   public query func calculateAmounts(newBillAmount: Float) : async [Person] {
