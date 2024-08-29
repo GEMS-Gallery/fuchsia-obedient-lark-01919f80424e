@@ -252,6 +252,9 @@ function App() {
               Total
             </Typography>
             <Typography variant="body1">
+              Total Bill Amount: ${billAmount.toFixed(2)}
+            </Typography>
+            <Typography variant="body1">
               Total Percentage: {Object.values(localPercentages).reduce((a, b) => a + b, 0).toFixed(2)}%
             </Typography>
             <Typography variant="body1">
