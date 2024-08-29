@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, TextField, Button, Slider, Box, Paper, Alert } from '@mui/material';
+import { Container, Typography, TextField, Button, Slider, Box, Paper, Alert, Grid, IconButton } from '@mui/material';
 import { styled } from '@mui/system';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { backend } from 'declarations/backend';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -89,6 +94,14 @@ function App() {
   };
 
   const handleLocalPercentageChange = (id: bigint, newValue: number) => {
+    const currentTotal = Object.values(localPercentages).reduce((a, b) => a + b, 0);
+    const oldValue = localPercentages[id.toString()] || 0;
+    const diff = newValue - oldValue;
+    if (currentTotal + diff > 100) {
+      setError('Total percentage cannot exceed 100%');
+      return;
+    }
+    setError(null);
     setLocalPercentages(prev => ({
       ...prev,
       [id.toString()]: newValue
@@ -114,71 +127,107 @@ function App() {
     }
   };
 
+  const chartData = {
+    labels: people.map(p => p.name),
+    datasets: [
+      {
+        data: people.map(p => localPercentages[p.id.toString()] || 0),
+        backgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+          '#4BC0C0',
+          '#9966FF',
+          '#FF9F40',
+        ],
+      },
+    ],
+  };
+
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="lg">
       <Typography variant="h4" component="h1" gutterBottom>
         Bill Splitter
       </Typography>
       {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
-      <StyledPaper>
-        <TextField
-          label="Bill Amount"
-          type="number"
-          value={billAmount}
-          onChange={handleBillAmountChange}
-          fullWidth
-          margin="normal"
-        />
-      </StyledPaper>
-      <StyledPaper>
-        <Typography variant="h6" gutterBottom>
-          People
-        </Typography>
-        {people.map((person) => (
-          <Box key={person.id.toString()} mb={2}>
-            <Typography variant="subtitle1">{person.name}</Typography>
-            <Slider
-              value={localPercentages[person.id.toString()] || 0}
-              onChange={(_, newValue) => handleLocalPercentageChange(person.id, newValue as number)}
-              aria-labelledby="continuous-slider"
-              valueLabelDisplay="auto"
-              min={0}
-              max={100}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <StyledPaper>
+            <Pie data={chartData} />
+          </StyledPaper>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <StyledPaper>
+            <TextField
+              label="Bill Amount"
+              type="number"
+              value={billAmount}
+              onChange={handleBillAmountChange}
+              fullWidth
+              margin="normal"
             />
-            <Typography variant="body2">
-              {(localPercentages[person.id.toString()] || 0).toFixed(2)}% - ${((billAmount * (localPercentages[person.id.toString()] || 0)) / 100).toFixed(2)}
+          </StyledPaper>
+          <StyledPaper>
+            <Typography variant="h6" gutterBottom>
+              People
             </Typography>
-            <Button onClick={() => handleRemovePerson(person.id)} size="small" color="secondary">
-              Remove
+            {people.map((person) => (
+              <Box key={person.id.toString()} mb={2}>
+                <Grid container alignItems="center" spacing={2}>
+                  <Grid item xs={3}>
+                    <Typography variant="subtitle1">{person.name}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Slider
+                      value={localPercentages[person.id.toString()] || 0}
+                      onChange={(_, newValue) => handleLocalPercentageChange(person.id, newValue as number)}
+                      aria-labelledby="continuous-slider"
+                      valueLabelDisplay="auto"
+                      min={0}
+                      max={100}
+                    />
+                  </Grid>
+                  <Grid item xs={2}>
+                    <Typography variant="body2">
+                      {(localPercentages[person.id.toString()] || 0).toFixed(2)}%
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={1}>
+                    <IconButton onClick={() => handleRemovePerson(person.id)} size="small" color="secondary">
+                      <DeleteIcon />
+                    </IconButton>
+                  </Grid>
+                </Grid>
+              </Box>
+            ))}
+            <Box display="flex" alignItems="center">
+              <TextField
+                label="New Person"
+                value={newPersonName}
+                onChange={(e) => setNewPersonName(e.target.value)}
+                margin="normal"
+              />
+              <Button onClick={handleAddPerson} variant="contained" color="primary" style={{ marginLeft: '1rem' }}>
+                Add Person
+              </Button>
+            </Box>
+            <Button onClick={handleSavePercentages} variant="contained" color="primary" style={{ marginTop: '1rem' }}>
+              Save Percentages
             </Button>
-          </Box>
-        ))}
-        <Box display="flex" alignItems="center">
-          <TextField
-            label="New Person"
-            value={newPersonName}
-            onChange={(e) => setNewPersonName(e.target.value)}
-            margin="normal"
-          />
-          <Button onClick={handleAddPerson} variant="contained" color="primary" style={{ marginLeft: '1rem' }}>
-            Add Person
-          </Button>
-        </Box>
-        <Button onClick={handleSavePercentages} variant="contained" color="primary" style={{ marginTop: '1rem' }}>
-          Save Percentages
-        </Button>
-      </StyledPaper>
-      <StyledPaper>
-        <Typography variant="h6" gutterBottom>
-          Total
-        </Typography>
-        <Typography variant="body1">
-          Total Percentage: {Object.values(localPercentages).reduce((a, b) => a + b, 0).toFixed(2)}%
-        </Typography>
-        <Typography variant="body1">
-          Remaining: {(100 - Object.values(localPercentages).reduce((a, b) => a + b, 0)).toFixed(2)}%
-        </Typography>
-      </StyledPaper>
+          </StyledPaper>
+          <StyledPaper>
+            <Typography variant="h6" gutterBottom>
+              Total
+            </Typography>
+            <Typography variant="body1">
+              Total Percentage: {Object.values(localPercentages).reduce((a, b) => a + b, 0).toFixed(2)}%
+            </Typography>
+            <Typography variant="body1">
+              Remaining: {(100 - Object.values(localPercentages).reduce((a, b) => a + b, 0)).toFixed(2)}%
+            </Typography>
+          </StyledPaper>
+        </Grid>
+      </Grid>
     </Container>
   );
 }
